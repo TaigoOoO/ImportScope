@@ -63,7 +63,7 @@ const COMANDOS: Comando[] = [
     grupo: "Ações",
     icon: Keyboard,
     atalho: "?",
-    onSelect: () => window.dispatchEvent(new CustomEvent("show-shortcuts")),
+    onSelect: () => { window.dispatchEvent(new CustomEvent("show-shortcuts")); },
   },
   {
     id: "logout",
