@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  email              String   @unique
+  name               String?
+  avatarUrl          String?
+
+  // Campos legais / LGPD — ver README (seção v3) para o desenho do fluxo de consentimento
+  acceptedTerms       Boolean   @default(false)
+  acceptedTermsAt     DateTime?
+  acceptedPrivacy     Boolean   @default(false)
+  acceptedPrivacyAt   DateTime?
+  isAdultConfirmed    Boolean   @default(false)
+  deletionRequestedAt DateTime? // soft delete: anonimização agendada, ver /api/user/delete
+
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  subscriptionStatus   String   @default("inactive") // inactive, active, trialing
+  plan                 String   @default("free") // free, pro
+
+  // Growth — referral (v4)
+  referralCode    String? @unique
+  referredBy      String?
+  referredByUser  User?   @relation("UserReferrals", fields: [referredBy], references: [id])
+  referredUsers   User[]  @relation("UserReferrals")
+  referralCount   Int     @default(0)
+  referralCredits Int     @default(0)
+
+  // Admin (v4)
+  role      String    @default("user") // user, admin
+  bannedAt  DateTime?
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  oportunidades   Oportunidade[]
+  analises        Analise[]
+  usoDiario       UsoDiario[]
+  emailLogs       EmailLog[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([role])
+  @@index([referredBy])
+}
+
+model Oportunidade {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  nome               String
+  categoria          String
+  precoFOB           Float
+  ncm                String
+  precoMLBR          Float
+  margemEstimada     Float
+  risco              String // BAIXO, MEDIO, ALTO
+  riscoMotivo        String
+  copyVenda          String
+  imagem             String
+  certificacoes      String[]
+  alertas            String[]
+  custoTotalBRL      Float
+  precoVendaSugerido Float
+  fornecedor         String
+  fornecedorUrl      String?
+  moq                Int      @default(100)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([categoria])
+  @@index([risco])
+}
+
+model Analise {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo      String // calculadora, oportunidade
+  dados     Json
+  resultado Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model UsoDiario {
+  id       String   @id @default(uuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  data     DateTime @default(now()) @db.Date
+  contagem Int      @default(0)
+
+  @@unique([userId, data])
+}
+
+// ── Growth Engine (v4) ──────────────────────────────────────────────────
+
+/// Captura da landing page (Hero). Separada de User porque quem se
+/// cadastra na lista de espera ainda não tem conta — só vira User de
+/// verdade ao entrar de fato via magic link/OAuth.
+model WaitlistEntry {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model EmailLog {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // welcome, first_login_tour, first_opportunity, reengagement, upgrade_push, pro_onboarding, renewal_reminder, cancellation, winback
+  sentAt    DateTime  @default(now())
+  openedAt  DateTime?
+  clickedAt DateTime?
+
+  @@index([userId, type])
+  @@index([type, sentAt])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  eventType String // page_view, opportunity_generated, calculator_used, upgrade_clicked, checkout_initiated, checkout_completed, referral_shared
+  metadata  Json?
+  sessionId String?
+  createdAt DateTime @default(now())
+
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ── Integrações (v4) ────────────────────────────────────────────────────
+
+model IntegrationLog {
+  id        String   @id @default(uuid())
+  provider  String // google_trends, 1688, receita_ncm, cotacao
+  status    String // success, error, fallback
+  message   String?
+  latency   Int // ms
+  createdAt DateTime @default(now())
+
+  @@index([provider, createdAt])
+}
+
+// ── Admin (v4) ──────────────────────────────────────────────────────────
+
+/// Permite que admins editem o texto de um template de email sem alterar
+/// código. Se não houver override, `lib/email-templates.ts` usa o texto
+/// hardcoded normalmente.
+model EmailTemplateOverride {
+  id        String   @id @default(uuid())
+  type      String   @unique // mesmo valor usado em EmailLog.type
+  subject   String
+  bodyText  String
+  updatedAt DateTime @updatedAt
+  updatedBy String? // email do admin que editou por último
+}
+
+/// Configurações globais editáveis pelo admin (preço Pro, limite diário
+/// Free, texto do banner legal, modo manutenção). Uma única linha,
+/// `id = "singleton"`.
+model AppConfig {
+  id                   String   @id @default("singleton")
+  precoProCentavos     Int      @default(2900) // R$ 29,00
+  limiteDiarioFree     Int      @default(2)
+  textoBannerLegal     String?
+  modoManutencao       Boolean  @default(false)
+  updatedAt            DateTime @updatedAt
+}

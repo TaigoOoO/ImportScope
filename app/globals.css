@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: radial-gradient(ellipse at top, rgba(249, 115, 22, 0.05) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: rgba(249, 115, 22, 0.25);
+    color: #f8fafc;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-border-active rounded-full;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .underline-wave {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10' preserveAspectRatio='none'%3E%3Cpath d='M0 5 Q 5 0, 10 5 T 20 5 T 30 5 T 40 5 T 50 5 T 60 5 T 70 5 T 80 5 T 90 5 T 100 5' fill='none' stroke='%23F97316' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: bottom;
+    background-size: 20px 8px;
+    padding-bottom: 4px;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, #111827 25%, #1a2332 37%, #111827 63%);
+    background-size: 400% 100%;
+    @apply animate-shimmer;
+  }
+}
+
+/* Aplicado só em 1-2 elementos com tema de "escaneamento" (não como
+   substituto global do cursor padrão) — um cursor personalizado em todo
+   o app cansa rápido e atrapalha a leitura de affordance dos elementos
+   clicáveis; usado com moderação continua sendo um detalhe agradável.
+   Fora do @layer de propósito: é um seletor simples, não uma utility
+   composta, e fica mais seguro como CSS puro dado que este projeto não
+   tem um plugin de nesting configurado no PostCSS. */
+@media (hover: hover) {
+  .cursor-radar {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23F97316' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Ccircle cx='12' cy='12' r='3' fill='%23F97316'/%3E%3C/svg%3E") 12 12, pointer;
+  }
+}

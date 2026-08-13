@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/lembrete-renovacao",
+      "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/cron/anonimizar-contas",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/emails",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/integrations",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}
