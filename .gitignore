@@ -1,8 +1,46 @@
-node_modules/
-.next/
-.env*.local
-.vercel
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
 /coverage
-/build
+
+# next.js
+/.next/
 /out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# env files — nunca versionar segredos reais.
+# .env.local.example é intencionalmente TRACKED (é só o template).
+.env
+.env*.local
+.env.production
+
+# vercel
+.vercel
+
+# typescript
 *.tsbuildinfo
+next-env.d.ts
+
+# prisma
+# (o client gerado vai para node_modules/.prisma, já coberto acima —
+# nada extra necessário aqui a menos que o output path seja customizado)
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+Thumbs.db
