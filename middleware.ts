@@ -2,6 +2,14 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // WORKAROUND: Supabase às vezes manda o code para / em vez de /auth/callback
+  // Isso redireciona automaticamente para o callback correto
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const code = request.nextUrl.searchParams.get("code");
+    const callbackUrl = new URL(`/auth/callback?code=${code}`, request.url);
+    return NextResponse.redirect(callbackUrl);
+  }
+
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
@@ -49,5 +57,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/login"],
+  matcher: ["/", "/dashboard/:path*", "/admin/:path*", "/login"],
 };
